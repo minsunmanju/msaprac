@@ -771,7 +771,7 @@ curl -X POST http://localhost:8080/api/v1/posts \
 
 가장 간단한 테스트 방법은 배포된 Vercel URL에 접속하는 것입니다.
 
-* **Vercel (FE) 접속 URL:** [https://msa-red.vercel.app](https://msa-red.vercel.app)
+* **Vercel (FE) 접속 URL:** [https://msateam4.vercel.app](https://msateam4.vercel.app)
 
 위 주소로 접속하여 회원가입, 로그인, 게시글 작성 등 모든 기능을 테스트할 수 있습니다.
 
