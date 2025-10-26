@@ -10,7 +10,6 @@ import Button from "../components/Button";
 import { POSITIONS, TYPES } from "../mock/posts";
 import { Link } from "react-router-dom";
 import api from "../api/axios";
-import { getPosts } from "../api/post";
 
 export default function Home() {
   const [q, setQ] = useState("");
@@ -18,7 +17,7 @@ export default function Home() {
   const [position, setPosition] = useState("ALL");
   const [showOpenOnly, setShowOpenOnly] = useState(false);
 
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState([]); // ✅ 초기값을 []로 설정
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
@@ -26,12 +25,18 @@ export default function Home() {
     if (raw == null) return null;
     const s = String(raw).trim();
 
-    const kor = { "백엔드":"BE", "프론트엔드":"FE", "디자이너":"DESIGNER", "안드로이드":"ANDROID", "웹":"WEB" };
+    const kor = {
+      "백엔드": "BE",
+      "프론트엔드": "FE",
+      "디자이너": "DESIGNER",
+      "안드로이드": "ANDROID",
+      "웹": "WEB",
+    };
     if (kor[s]) return kor[s];
 
     const valToKey = {
-      be:"BE", fe:"FE", pm:"PM", designer:"DESIGNER",
-      ai:"AI", android:"ANDROID", ios:"IOS", web:"WEB"
+      be: "BE", fe: "FE", pm: "PM", designer: "DESIGNER",
+      ai: "AI", android: "ANDROID", ios: "IOS", web: "WEB"
     };
     const low = s.toLowerCase();
     if (valToKey[low]) return valToKey[low];
@@ -45,17 +50,45 @@ export default function Home() {
 
   const normalizePosList = (v) => {
     const arr = Array.isArray(v) ? v
-              : Array.isArray(v?.positions) ? v.positions
-              : Array.isArray(v?.position) ? v.position
-              : v?.positions ?? v?.position ?? v ?? [];
+      : Array.isArray(v?.positions) ? v.positions
+      : Array.isArray(v?.position) ? v.position
+      : v?.positions ?? v?.position ?? v ?? [];
     const list = Array.isArray(arr) ? arr : [arr].filter(Boolean);
     const keys = list.map(normalizePosKey).filter(Boolean);
     return [...new Set(keys)];
   };
 
-  // 2. API로 모집글 불러오기
+  // ✅ 게시글 목록 불러오기 (API 한 번만 호출)
   useEffect(() => {
-    getPosts().then(setPosts);
+    (async () => {
+      try {
+        setLoading(true);
+        const { data } = await api.get("/api/v1/posts");
+
+        const normalized = (data ?? []).map((p) => {
+          const posKeys = normalizePosList(p.positions ?? p.position);
+          return {
+            ...p,
+            id: p.postId,
+            type: p.category?.toUpperCase(), // STUDY / PROJECT
+            positions: posKeys,
+            language: Array.isArray(p.techStack)
+              ? p.techStack.join(", ")
+              : (p.techStack ?? ""),
+            isClosed: p.status === "CLOSED",
+            author: p.nickname ?? "익명",
+            commentCount: p.commentCount ?? 0,
+          };
+        });
+
+        setPosts(normalized);
+      } catch (e) {
+        console.error(e);
+        setErr(e?.response?.data?.message ?? "목록 조회 실패");
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   const matchPosition = (postPos, selected) => {
@@ -70,50 +103,26 @@ export default function Home() {
     if (!p?.deadline) return false;
     const s = String(p.deadline).trim();
     const norm = s.replace(/\./g, "-");
-    const d = /^\d{4}-\d{2}-\d{2}$/.test(norm) ? new Date(norm) : new Date(norm);
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(norm)
+      ? new Date(norm)
+      : new Date(norm);
     if (isNaN(d)) return false;
     d.setHours(23, 59, 59, 999);
     return Date.now() > d.getTime();
   };
 
-  useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true);
-        const { data } = await api.get("/api/v1/posts");
-
-        const normalized = (data ?? []).map((p) => {
-          const posKeys = normalizePosList(p.positions ?? p.position);
-          return {
-            ...p,
-            id: p.postId,
-            type: p.category?.toUpperCase(), // STUDY / PROJECT
-            positions: posKeys,
-            language: Array.isArray(p.techStack) ? p.techStack.join(", ") : (p.techStack ?? ""),
-            isClosed: p.status === "CLOSED",
-            author: p.nickname ?? "익명",
-            commentCount: p.commentCount ?? 0,
-          };
-        });
-
-        setPosts(normalized);
-      } catch (e) {
-        setErr(e?.response?.data?.message ?? "목록 조회 실패");
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
+  // ✅ 안전 처리: posts가 배열인지 확인
   const filtered = useMemo(() => {
+    const safePosts = Array.isArray(posts) ? posts : [];
     const qLower = q.trim().toLowerCase();
-    return posts.filter((p) => {
+
+    return safePosts.filter((p) => {
       const byType = type === "ALL" || p.type === type;
       const byPos = matchPosition(p.positions, position);
-      // const byQ = !qLower || String(p.title ?? "").toLowerCase().includes(qLower);
-      const byQ = !qLower || 
+      const byQ =
+        !qLower ||
         String(p.title ?? "").toLowerCase().includes(qLower) ||
-        String(p.content ?? "").toLowerCase().includes(qLower); // content 포함
+        String(p.content ?? "").toLowerCase().includes(qLower);
       const openOnly = !showOpenOnly || !isClosed(p);
       return byType && byPos && byQ && openOnly;
     });
@@ -149,7 +158,7 @@ export default function Home() {
         position={position}
         setPosition={setPosition}
         TYPES={TYPES}
-        POSITIONS={POSITIONS} // 여기의 value를 "BE/FE/..." 또는 "be/fe/..."로 둬도 정상 동작
+        POSITIONS={POSITIONS}
       />
 
       <main className="container">
