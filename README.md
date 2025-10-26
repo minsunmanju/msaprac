@@ -779,7 +779,7 @@ curl -X POST http://localhost:8080/api/v1/posts \
 
 이 서비스가 동작하는 방식은 다음과 같습니다.
 
-1.  **사용자 (브라우저)**가 [https://msa-red.vercel.app](https://msa-red.vercel.app) 에 접속합니다.
+1.  **사용자 (브라우저)**가 [https://msateam4.vercel.app](https://msateam4.vercel.app) 에 접속합니다.
 2.  **Vercel (React)**이 `REACT_APP_API_BASE_URL` 환경 변수(`http://[EC2 퍼블릭 IP 주소]/api`)를 읽어 백엔드 API를 호출합니다.
 3.  **AWS EC2 (Nginx)**가 `80`번 포트로 `/api` 요청을 받습니다.
 4.  **Nginx**가 이 요청을 서버 내부의 `API-Gateway` 컨테이너(`127.0.0.1:8080`)로 전달(Proxy)합니다.
@@ -816,7 +816,9 @@ curl -X POST http://localhost:8080/api/v1/posts \
     curl -s http://localhost:8761/eureka/apps | grep '<name>'
     ```
     * **정상 출력 (예시):** `API-GATEWAY`, `USER-SERVICE`, `POST-SERVICE`, `NOTIFICATION-SERVICE` 4개의 이름이 모두 표시되어야 합니다.
-  
-- 현재 트러블슈팅 필요 (https://msa-red.vercel.app 접속 결과) 
-  <img width="1919" height="966" alt="스크린샷 2025-10-25 153240" src="https://github.com/user-attachments/assets/8dc8703c-57a9-4bbc-8534-d8b649a625e6" />
+
+확인해야 할 사항
+
+- [ ] vercel에서 정상적으로 프론트엔드 화면이 나오는지 확인
+- [ ] EC2 환경에서 백엔드 서버가 정상적으로 작동 하는지 확인
 
