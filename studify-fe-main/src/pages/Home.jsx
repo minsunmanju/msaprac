@@ -17,21 +17,16 @@ export default function Home() {
   const [position, setPosition] = useState("ALL");
   const [showOpenOnly, setShowOpenOnly] = useState(false);
 
-  const [posts, setPosts] = useState([]); // ✅ 초기값을 []로 설정
+  const [posts, setPosts] = useState([]); // ✅ 초기값: 빈 배열
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
+  // 직군명 통일
   const normalizePosKey = (raw) => {
     if (raw == null) return null;
     const s = String(raw).trim();
 
-    const kor = {
-      "백엔드": "BE",
-      "프론트엔드": "FE",
-      "디자이너": "DESIGNER",
-      "안드로이드": "ANDROID",
-      "웹": "WEB",
-    };
+    const kor = { "백엔드": "BE", "프론트엔드": "FE", "디자이너": "DESIGNER", "안드로이드": "ANDROID", "웹": "WEB" };
     if (kor[s]) return kor[s];
 
     const valToKey = {
@@ -42,30 +37,37 @@ export default function Home() {
     if (valToKey[low]) return valToKey[low];
 
     const up = s.toUpperCase();
-    const keys = ["BE","FE","PM","DESIGNER","AI","ANDROID","IOS","WEB","ALL"];
+    const keys = ["BE", "FE", "PM", "DESIGNER", "AI", "ANDROID", "IOS", "WEB", "ALL"];
     if (keys.includes(up)) return up;
 
     return null;
   };
 
   const normalizePosList = (v) => {
-    const arr = Array.isArray(v) ? v
-      : Array.isArray(v?.positions) ? v.positions
-      : Array.isArray(v?.position) ? v.position
+    const arr = Array.isArray(v)
+      ? v
+      : Array.isArray(v?.positions)
+      ? v.positions
+      : Array.isArray(v?.position)
+      ? v.position
       : v?.positions ?? v?.position ?? v ?? [];
+
     const list = Array.isArray(arr) ? arr : [arr].filter(Boolean);
     const keys = list.map(normalizePosKey).filter(Boolean);
     return [...new Set(keys)];
   };
 
-  // ✅ 게시글 목록 불러오기 (API 한 번만 호출)
+  // ✅ 게시글 불러오기
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
         const { data } = await api.get("/api/v1/posts");
 
-        const normalized = (data ?? []).map((p) => {
+        // ⚙️ 응답이 배열이 아닐 때 대비
+        const postsArray = Array.isArray(data) ? data : data?.data ?? [];
+
+        const normalized = (postsArray ?? []).map((p) => {
           const posKeys = normalizePosList(p.positions ?? p.position);
           return {
             ...p,
@@ -103,15 +105,13 @@ export default function Home() {
     if (!p?.deadline) return false;
     const s = String(p.deadline).trim();
     const norm = s.replace(/\./g, "-");
-    const d = /^\d{4}-\d{2}-\d{2}$/.test(norm)
-      ? new Date(norm)
-      : new Date(norm);
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(norm) ? new Date(norm) : new Date(norm);
     if (isNaN(d)) return false;
     d.setHours(23, 59, 59, 999);
     return Date.now() > d.getTime();
   };
 
-  // ✅ 안전 처리: posts가 배열인지 확인
+  // ✅ 안전 필터 처리
   const filtered = useMemo(() => {
     const safePosts = Array.isArray(posts) ? posts : [];
     const qLower = q.trim().toLowerCase();
@@ -140,8 +140,10 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  useEffect(() => { setPage(1); }, [q, type, position, showOpenOnly]);
-  useEffect(() => { if (page > totalPages) setPage(totalPages || 1); }, [totalPages, page]);
+  useEffect(() => setPage(1), [q, type, position, showOpenOnly]);
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages || 1);
+  }, [totalPages, page]);
 
   if (loading) return <div style={{ padding: 24 }}>로딩 중…</div>;
   if (err) return <div style={{ padding: 24, color: "red" }}>{err}</div>;
@@ -162,10 +164,13 @@ export default function Home() {
       />
 
       <main className="container">
-        <div className="list-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div
+          className="list-head"
+          style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+        >
           <h2>게시글 목록</h2>
           <button
-            onClick={() => setShowOpenOnly(v => !v)}
+            onClick={() => setShowOpenOnly((v) => !v)}
             style={{
               padding: "6px 12px",
               borderRadius: 8,
@@ -173,7 +178,7 @@ export default function Home() {
               background: showOpenOnly ? "#7c3aed" : "#fff",
               color: showOpenOnly ? "#fff" : "#222",
               fontWeight: 600,
-              cursor: "pointer"
+              cursor: "pointer",
             }}
             aria-pressed={showOpenOnly}
             aria-label="모집중만 토글"
@@ -207,10 +212,25 @@ export default function Home() {
         </div>
 
         {totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, margin: '32px 0' }}>
-            <button onClick={() => goPage(page - 1)} disabled={page === 1}
-              style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid #ddd',
-                background: '#fff', cursor: page === 1 ? 'not-allowed' : 'pointer' }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: 8,
+              margin: "32px 0",
+            }}
+          >
+            <button
+              onClick={() => goPage(page - 1)}
+              disabled={page === 1}
+              style={{
+                padding: "6px 14px",
+                borderRadius: 8,
+                border: "1px solid #ddd",
+                background: "#fff",
+                cursor: page === 1 ? "not-allowed" : "pointer",
+              }}
+            >
               &lt;
             </button>
             {Array.from({ length: totalPages }, (_, i) => (
@@ -218,22 +238,30 @@ export default function Home() {
                 key={i + 1}
                 onClick={() => goPage(i + 1)}
                 style={{
-                  padding: '6px 14px',
+                  padding: "6px 14px",
                   borderRadius: 8,
-                  border: '1px solid #ddd',
-                  background: page === i + 1 ? '#7c3aed' : '#fff',
-                  color: page === i + 1 ? '#fff' : '#222',
+                  border: "1px solid #ddd",
+                  background: page === i + 1 ? "#7c3aed" : "#fff",
+                  color: page === i + 1 ? "#fff" : "#222",
                   fontWeight: page === i + 1 ? 700 : 500,
-                  cursor: 'pointer',
+                  cursor: "pointer",
                 }}
                 aria-current={page === i + 1 ? "page" : undefined}
               >
                 {i + 1}
               </button>
             ))}
-            <button onClick={() => goPage(page + 1)} disabled={page === totalPages}
-              style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid #ddd',
-                background: '#fff', cursor: page === totalPages ? 'not-allowed' : 'pointer' }}>
+            <button
+              onClick={() => goPage(page + 1)}
+              disabled={page === totalPages}
+              style={{
+                padding: "6px 14px",
+                borderRadius: 8,
+                border: "1px solid #ddd",
+                background: "#fff",
+                cursor: page === totalPages ? "not-allowed" : "pointer",
+              }}
+            >
               &gt;
             </button>
           </div>
