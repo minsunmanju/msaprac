@@ -42,7 +42,7 @@ export default function SignUp() {
 
     setLoading(true);
     try {
-      const res = await api.post("/api/v1/users", payload);
+      const res = await api.post("/studify/api/v1/users", payload);
 
       const created = res?.data;
       if (created?.id) {
