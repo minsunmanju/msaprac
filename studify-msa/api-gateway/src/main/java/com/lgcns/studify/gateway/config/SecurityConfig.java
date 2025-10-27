@@ -13,14 +13,14 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http
-            .csrf(csrf -> csrf.disable())
+            // ✅ 모든 보안 기능 비활성화
+            .csrf(ServerHttpSecurity.CsrfSpec::disable)
+            .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+            .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+            .logout(ServerHttpSecurity.LogoutSpec::disable)
+            // ✅ 모든 요청 허용
             .authorizeExchange(exchanges -> exchanges
-                .pathMatchers("/studify/**").permitAll()
-                .pathMatchers("/api/v1/posts/**").permitAll()
-                .pathMatchers("/api/v1/post/**").permitAll()
-                .pathMatchers("/api/auth/**").permitAll()
-                .pathMatchers("/actuator/**").permitAll()
-                .anyExchange().authenticated()
+                .pathMatchers("/**").permitAll()
             );
 
         return http.build();
