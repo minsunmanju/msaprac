@@ -2,21 +2,13 @@ server:
   port: 8080
 
 spring:
-  application:
-    name: api-gateway
   cloud:
     gateway:
-      discovery:
-        locator:
-          enabled: true
-          lower-case-service-id: true
-      # CORS
       globalcors:
-        add-to-simple-url-handler-mapping: true   # OPTIONS 프리플라이트 처리 필요 시
         corsConfigurations:
           '[/**]':
             allowedOrigins:
-              - "https://msa-red.vercel.app"
+              - "https://msaprac.vercel.app"  # ✅ 여기를 수정
             allowedMethods:
               - GET
               - POST
