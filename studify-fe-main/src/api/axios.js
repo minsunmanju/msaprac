@@ -2,6 +2,7 @@
 import axios from "axios";
 
 const api = axios.create({
+  baseURL: '/api', // ✅ Vercel이 /api → team4.store/api 로 프록시
   withCredentials: true,
 });
 
