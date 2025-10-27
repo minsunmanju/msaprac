@@ -42,7 +42,7 @@ export default function SignUp() {
 
     setLoading(true);
     try {
-      const res = await axios.post("https://team4.store/api/v1/users/signup", payload);
+      const res = await api.post("https://team4.store/api/v1/users/signup", payload);
 
       const created = res?.data;
       if (created?.id) {
